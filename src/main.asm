@@ -1,32 +1,18 @@
     org 200h
-    ld de,0
-    call clear_screen
+    call init
     ret
 
-clear_screen:
-    macro pde4
-    push de
-    push de
-    push de
-    push de
-    endm
-
-    di
-    ld hl,0
-    add hl,sp               ; store SP into HL
-    ld sp,A800h             ; load SP with end of video ram
-    ld b,40*4
-clear_screen_loop:
-    ; 64 bytes
-    pde4
-    pde4
-    pde4
-    pde4
-    pde4
-    pde4
-    pde4
-    pde4
-    djnz clear_screen_loop
-    ld sp,hl                ; restore SP
-    ei
+init:
+    ; clear screen to black
+    call display_1
+    call access_pixels_0
+    xor a
+    call cls
+    call access_colors_0
+    xor a
+    call cls
+    call access_pixels_0
+    call display_0
     ret
+
+    include "irm.asm"
