@@ -9,7 +9,7 @@ IO84_SEL_RAM8       = (1<<4)
 IO84_BLOCKSEL_RAM8  = (1<<5)
 
 ; write to pixel bank 0
-; modifies a
+; trashes: a
 access_pixels_0:
     ld a,(ix+1)
     and ~(IO84_SEL_CPU_COLOR|IO84_SEL_CPU_IMG)
@@ -47,6 +47,7 @@ access_colors_1:
     ret
 
 ; display image 0
+; trashes: a
 display_0:
     ld a,(ix+1)
     and ~(IO84_SEL_VIEW_IMG)
@@ -55,11 +56,41 @@ display_0:
     ret
 
 ; display image 1
+; trashes: a
 display_1:
     ld a,(ix+1)
     or IO84_SEL_VIEW_IMG
     ld (ix+1),a
     out (84h),a
+    ret
+
+; clear image 0
+; inputs:
+;   a: background color
+; trashes: a, hl, de, b
+cls_0:
+    ld b,a
+    call access_colors_0
+    ld a,b
+    call clear_irm
+    call access_pixels_0
+    xor a
+    call clear_irm
+    ret
+
+; clear image 1
+; clear image 0
+; inputs:
+;   a: background color
+; trashes: a, hl, de, b
+cls_1:
+    ld b,a
+    call access_colors_1
+    ld a,b
+    call clear_irm
+    call access_pixels_1
+    xor a
+    call clear_irm
     ret
 
 ; fast video bank clear routine, disables interrupts, sets stack pointer
@@ -74,7 +105,7 @@ display_1:
     push de
     push de
     endm
-cls:
+clear_irm:
     ld e,a
     ld d,a
     ld hl,0         ; store current sp in hl
