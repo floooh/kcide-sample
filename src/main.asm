@@ -26,7 +26,7 @@
 
 .repeat:
     ld de,A780h
-    ld b,38h
+    ld b,28h + NUM_CHARS
 .outer:
     push bc
     push de
@@ -94,8 +94,10 @@ init:
     include "vsync.asm"
 
 ; data
-NUM_CHARS = 16
+NUM_CHARS = 21
 kc854_str:
-    dw CHR_SPACE, CHR_H, CHR_E, CHR_L, CHR_L, CHR_O, CHR_SPACE
+    dw CHR_SPACE
+    dw CHR_EXCL, CHR_EXCL, CHR_EXCL, CHR_SPACE
+    dw CHR_H, CHR_E, CHR_L, CHR_L, CHR_O, CHR_SPACE
     dw CHR_K, CHR_C, CHR_8, CHR_5, CHR_SLASH, CHR_4
-    dw CHR_EXCL, CHR_EXCL, CHR_EXCL
+    dw CHR_SPACE, CHR_EXCL, CHR_EXCL, CHR_EXCL
