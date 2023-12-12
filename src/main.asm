@@ -4,45 +4,82 @@
     ; prepare string pixel data for fast copying
     ld hl,kc854_str
     ld de,4000h
-    ld b,17
-    call copy8x16xN
+    ld b,NUM_CHARS
+    call copy8x8xN
+
+    ; create 8 copies, left-shifted by 1 pixel
+    ld b,7
+    ld hl,4000h
+    ld de,4100h
+.loop8:
+    push bc
+    push de
+    push hl
+    ld b,NUM_CHARS
+    call lshift8x8xN
+    pop hl
+    pop de
+    pop bc
+    inc h
+    inc d
+    djnz .loop8
 
 .repeat:
-    ld de,8410h
-    ld b,D0h
-.loop:
-    push de
+    ld de,A780h
+    ld b,38h
+.outer:
     push bc
-    ld hl,3FFEh
-    ld b,17
-    call blit8x16xN
-    ld hl,3FFEh
-    ld b,17
-    call blit8x16xN
-    pop bc
-    pop de
-    inc e
-    call vsync_wait
-    djnz .loop
-
-    ld de,84E0h
-    ld b,D0h
-.loop1
     push de
+    ld hl,4000h
+    ld b,8
+.inner:
     push bc
-    ld hl,4000h
-    ld b,17
-    call blit8x16xN
-    ld hl,4000h
-    ld b,17
-    call blit8x16xN
-    pop bc
+    push de
+    push hl
+    ld b,NUM_CHARS
+    call blit8x8xN
+    pop hl
     pop de
-    dec e
+    pop bc
+    inc h
     call vsync_wait
-    djnz .loop1
-
+    djnz .inner
+    pop de
+    pop bc
+    dec d
+    djnz .outer
     jr .repeat
+
+;.repeat:
+;    ld de,8410h
+;    ld b,D0h
+;.loop:
+;    push de
+;    push bc
+;    ld hl,3FFFh
+;    ld b,NUM_CHARS
+;    call blit8x8xN
+;    pop bc
+;    pop de
+;    inc e
+;    call vsync_wait
+;    djnz .loop
+;
+;    ld de,84E0h
+;    ld b,D0h
+;.loop1
+;    push de
+;    push bc
+;    ld hl,4100h
+;    ld b,NUM_CHARS
+;    call blit8x8xN
+;    pop bc
+;    pop de
+;    dec e
+;    call vsync_wait
+;    djnz .loop1
+;
+;    jr .repeat
 
 init:
 ; clear screen to bright green foreground and black background
@@ -57,7 +94,8 @@ init:
     include "vsync.asm"
 
 ; data
+NUM_CHARS = 16
 kc854_str:
     dw CHR_SPACE, CHR_H, CHR_E, CHR_L, CHR_L, CHR_O, CHR_SPACE
     dw CHR_K, CHR_C, CHR_8, CHR_5, CHR_SLASH, CHR_4
-    dw CHR_EXCL, CHR_EXCL, CHR_EXCL, CHR_SPACE
+    dw CHR_EXCL, CHR_EXCL, CHR_EXCL

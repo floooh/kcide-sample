@@ -71,13 +71,72 @@ copy8x16xN:
     djnz .loop
     ret
 
+; left-shift multiple 8x16 tiles from a src- to a dst location
+; inputs:
+;   hl: points to start of src data, aligned to 100h
+;   de: points to start of dst data, aligned to 100
+;   b: number of tiles to blit (max 31)
+lshift8x8xN:
+    ; set hl and de to last row of last tile
+    ld a,b
+    add a,a     ; tile count * 8
+    add a,a
+    add a,a
+    ld c,a
+    ld a,l
+    add a,c
+    ld l,a      ; hl = hl + a * 8
+    ld a,e
+    add a,c
+    ld e,a      ; de = de + a * 8
+
+    dec hl      ; last row of last tile
+    dec de
+    ld c,b      ; store tile count in c
+
+    ; outer loop: 16 pixel rows
+    ; inner loop: 1 pixel row across all tiles
+    ld b,8     ; row counter
+.outer:
+    push bc
+    push de
+    push hl
+    ld b,c
+    xor a       ; clear carry flag
+.inner:
+    ld a,(hl)
+    rl a        ; carry <= bit7...bit0 <= carry
+    ld (de),a
+    ex af,af'   ; preserve carry for next shift
+    ld a,l
+    sub 8       ; hl = hl - 8
+    ld l,a
+    ld a,e
+    sub 8       ; de = de - 8
+    ld e,a
+    ex af,af'   ; restore carry
+    djnz .inner
+
+    pop hl
+    pop de
+    pop bc
+    dec de      ; next column
+    dec hl
+    djnz .outer
+    ret
+
 ; blit consecutive 8x8 tiles to video ram
 ; inputs:
-;   hl: points to start to tile data
+;   hl: points to start to tile data (100h aligned)
 ;   de: points to dst video ram address
 ;   b:  number of tiles to blit
 blit8x8xN:
 .loop:
+    ld a,d      ; clip against screen boundaries
+    cp 80h      ; left border
+    jr c,.skip_left
+    cp A8h      ; right border
+    jr nc,.skip_right
     ld a,e      ; store original row
     ldi         ; copy 8 bytes
     ldi
@@ -88,9 +147,19 @@ blit8x8xN:
     ldi
     ldi
     ld e,a      ; restore original row
+.skip_right
     inc d       ; next column in video mem
     djnz .loop
     ret
+.skip_left:
+    ld a,l
+    add a,8
+    ld l,a
+    inc d
+    djnz .loop
+    ret
+
+
 
 ; blit consecutive 8x16 tiles to video ram
 ; inputs:
