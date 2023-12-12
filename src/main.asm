@@ -1,11 +1,7 @@
     org 200h
     call init
 
-    ; quick'n'dirty rainbow color clear
-    call access_colors_1
-    call clear_rainbow
-    call access_pixels_1
-
+    ; prepare string pixel data for fast copying
     ld hl,kc854_str
     ld de,4000h
     ld b,17
@@ -26,6 +22,7 @@
     pop bc
     pop de
     inc e
+    call wait_vsync
     djnz .loop
 
     ld de,84E0h
@@ -42,82 +39,70 @@
     pop bc
     pop de
     dec e
+    call wait_vsync
     djnz .loop1
 
     jr .repeat
 
 init:
-    ; clear screen to black
-    ld a,60h        ; bright green
+; clear screen to bright green foreground and black background
+    ld a,60h
     call cls_1
     call display_1
+    call setup_vsync
     ret
 
-kc854_str:
-    dw CHR_SPACE, CHR_H, CHR_E, CHR_L, CHR_L, CHR_O, CHR_SPACE
-    dw CHR_K, CHR_C, CHR_8, CHR_5, CHR_SLASH, CHR_4
-    dw CHR_EXCL, CHR_EXCL, CHR_EXCL, CHR_SPACE
+    ; setup the vertical blank interrupt via CTC channel 2
+setup_vsync:
+    di
+    ; set interrupt service routine for CTC channel 2
+    ld hl,01ECh
+    ld de,vsync_isr
+    ld (hl),e
+    inc hl
+    ld (hl),d
+
+    ; setup CTC channel 2 to trigger interrupt on CLK/TRG2 (vsync)
+
+    ; load CTC2 control word
+    ; bit 7 = 1: enable interrupt
+    ; bit 6 = 1: counter mode
+    ; bit 5 = 0: prescaler 16
+    ; bit 4 = 1: rising edge
+    ; bit 3 = 0: time trigger (irrelevant)
+    ; bit 2 = 1: constant follows
+    ; bit 1 = 0: no reset
+    ; bit 0 = 1: this is a control word
+    ld a,11010101b
+    out (8Eh),a
+    ; trigger vsync interrupt each frame
+    ld a,1
+    out (8Eh),a
+    ei
+    ret
+
+wait_vsync:
+    ld a,(vsync)
+    and 1
+    jr z, wait_vsync
+    xor a
+    ld (vsync),a
+    ret
+
+vsync_isr:
+    push af
+    ld a,1
+    ld (vsync),a
+    pop af
+    ei
+    reti
 
     include "irm.asm"
     include "blit.asm"
 
-clear_rainbow:
-    ld hl,8000h
-    ; clear one column
-    ld b,40
-.loop_outer
-    push bc
-    ld b,15
-    ld c,8
-    ld a,8
-.loop_inner:
-    ld e,a
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    ld (hl),a
-    inc l
-    add a,c
-    and 7fh
-    cp 0
-    jr z, .skip_black
-    cp 40h
-    jr z, .skip_black
-.continue
-    and 7fh
-    djnz .loop_inner
-    inc h
-    pop bc
-    djnz .loop_outer
-    ret
-
-.skip_black:
-    add a,c
-    jr .continue
+; data
+vsync:  db 0
+kc854_str:
+    dw CHR_SPACE, CHR_H, CHR_E, CHR_L, CHR_L, CHR_O, CHR_SPACE
+    dw CHR_K, CHR_C, CHR_8, CHR_5, CHR_SLASH, CHR_4
+    dw CHR_EXCL, CHR_EXCL, CHR_EXCL, CHR_SPACE
