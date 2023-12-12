@@ -1,23 +1,4 @@
 
-; blit an 8x8 tile to video ram
-; inputs:
-;   hl: src address
-;   de: dst address
-; modifies:
-;   hl: +8
-;   de: +8
-;   bc: -8
-blit8:
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ret
-
 ; copy multiple 8x8 tiles
 ; inputs:
 ;   hl: points to array of src addresses
