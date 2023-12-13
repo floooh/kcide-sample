@@ -94,7 +94,7 @@ lshift8x8xN:
     dec de
     ld c,b      ; store tile count in c
 
-    ; outer loop: 16 pixel rows
+    ; outer loop: 8 pixel rows
     ; inner loop: 1 pixel row across all tiles
     ld b,8     ; row counter
 .outer:
