@@ -1,27 +1,22 @@
     org 200h
-    call init
 
-.loop:
-    call scroll_begin
-    ld e,C0h
-    call scroll_draw_16
-    call scroll_end
-
-    call vsync_wait
-    jr .loop
-
-init:
-; clear screen to bright green foreground and black background
     ld a,60h
     call cls_1
     call display_1
     call vsync_init
     ld hl,scroll_text
     call scroll_init
-    ret
+
+.frame_loop:
+    call scroll_begin
+    ld e,C0h
+    call scroll_draw_16
+    call scroll_end
+
+    call vsync_wait
+    jr .frame_loop
 
     include "irm.asm"
-    include "blit.asm"
     include "vsync.asm"
     include "scroll.asm"
 
