@@ -21,7 +21,7 @@
     include "scroll.asm"
 
 scroll_text:
-    db "THE KC85 WAS A SERIES OF 8-BIT COMPUTERS BUILT IN EAST GERMANY DURING THE 1980'S. "
-    db "KC MEANS 'KLEINCOMPUTER' OR 'SMALL COMPUTER', THIS WAS AN UMBRELLA NAME FOR 6 DIFFERENT COMPUTER MODELS "
-    db "WITH PARTIALLY VERY DIFFERENT HARDWARE FROM 2 DIFFERENT MANUFACTURERS."
+    DB "*** The KC85 was a series of 8-bit computers built in East Germany during the 1980's. "
+    DB "KC means 'Kleincomputer' or 'Small Computer', this was an umbrella name for 6 different computer models "
+    DB "with partially very different hardware from 2 different manufacturers. "
     db 0

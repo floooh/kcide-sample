@@ -22,7 +22,8 @@
 
 SHIFT_MATRIX_BASE = 3F00h
 RINGBUFFER_BASE = 4000h
-FONT_BASE = EE00h
+FONT_BASE_0 = EE00h         ; ASCII codes 20h..5Fh
+FONT_BASE_1 = FE00h         ; ASCII codes 0..1Fh and 60h to 7Fh
 
 ; scroller local state
 ;
@@ -69,11 +70,28 @@ scroll_begin_frame:
     ld (str_next),hl
     cp 0
     jp z,.rewind_str
-                        ; FIXME: support lower case characters
-    sub 20h             ; space => index 0
+
+    ; select font table
+    cp 5Fh
+    jr c, .find_font_0
+    ; lower-case characters
+    sub 40h
+    ld hl,FONT_BASE_1
+    jr .font_selected
+.find_font_0:
+    cp 1Fh
+    jr c, .find_font_1
+    ; upper-case characters
+    sub 20h
+    ld hl,FONT_BASE_0
+    jr .font_selected
+.find_font_1:
+    ; special characters < 20h
+    ld hl,FONT_BASE_0
+
+.font_selected:         ; a is now character index in font table, hl points to font table
     add a,a             ; * 2
     add a,a             ; * 4
-    ld hl,FONT_BASE     ; character table 1 (starting at ASCII code 20h)
     ld d,0
     ld e,a
     add hl,de
