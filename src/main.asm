@@ -8,10 +8,10 @@
     call scroll_init
 
 .frame_loop:
-    call scroll_begin
+    call scroll_begin_frame
     ld e,C0h
-    call scroll_draw_16
-    call scroll_end
+    call scroll_draw
+    call scroll_end_frame
 
     call vsync_wait
     jr .frame_loop

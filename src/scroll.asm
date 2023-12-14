@@ -1,33 +1,23 @@
 ;
 ;   A 40 tiles wide 'infinite scroller':
 ;
-;   - 8 ringbuffer with 64 8x8 tiles each with a 40-tile wide 'sliding window'
-;     (meaning 512 bytes per ring buffer)
+;   - 8 ringbuffer with 64 8x16 tiles each with a 40-tile wide 'sliding window'
+;     (meaning 1024 bytes per ring buffer) starting at address 4000h
 ;   - each ringbuffer is left-shifted by 1 pixel from previous one
 ;   - a frame counter which goes from 0..7
 ;
-;   frame 0: blit next tile into ringbuffer[0]
-;   frame 1: left-shift last from rb[0] => rb[1]
-;   frame 2: left-shift last from rb[1] => rb[2]
-;   frame 3: left-shift last from rb[2] => rb[3]
-;   frame 4: left-shift last from rb[3] => rb[4]
-;   frame 5: left-shift last from rb[4] => rb[5]
-;   frame 6: left-shift last from rb[5] => rb[6]
-;   frame 7: left-shift last from rb[6] => rb[7]
+;   Address 3F00 contains a 8x8 byte matrix of the current character preshifted 8x.
 ;
-;   Address 3F00 contains a 64 byte matrix of the
-;   current character preshifted 8x.
-;
-;   Uses address 4000..4FFF for the ring buffers:
+;   Uses address 4000..5FFF for the ring buffers:
 ;
 ;   rb[0]:  4000
-;   rb[1]:  4200
-;   rb[2]:  4400
-;   rb[3]:  4600
-;   rb[4]:  4800
-;   rb[5]:  4A00
-;   rb[6]:  4C00
-;   rb[7]:  4E00
+;   rb[1]:  4400
+;   rb[2]:  4800
+;   rb[3]:  4C00
+;   rb[4]:  5000
+;   rb[5]:  5400
+;   rb[6]:  5800
+;   rb[7]:  5C00
 ;
 
 SHIFT_MATRIX_BASE = 3F00h
@@ -36,14 +26,15 @@ FONT_BASE = EE00h
 
 ; scroller local state
 ;
-str_start:          dw 0        ; start address of zero-terminated ASCII string, each characer
+str_start:          dw 0        ; start address of zero-terminated ASCII string
 str_next:           dw 0        ; pointer to next character, rewinds to str_start on zero-character
 frame_count:        db 0        ; frame counter (only low 3 bits relevant)
-rb_tail:            dw 0        ; current ringbuffer tail 9-bit offset
-rb_head:            dw 0        ; current ringbuffer head 9-bit offset, increments by 8 every 8 frames, wraps around at 200h
+rb_tail:            dw 0        ; current ringbuffer tail 10-bit offset
+rb_head:            dw 0        ; current ringbuffer head 10-bit offset, increments by 16 every 8 frames, wraps around at 400h
 rb_prev:            dw 0        ; offset of the current character (head-1)
 
-masks: db 0,1,3,7,15,31,63,127
+    align 8
+masks: db 0,1,3,7,15,31,63,127  ; left/right masks for pre-rotated tile pixels
 
 ;   scroll_init
 ;
@@ -53,16 +44,23 @@ masks: db 0,1,3,7,15,31,63,127
 scroll_init:
     ld (str_start),hl
     ld (str_next),hl
-    ld hl,200h - 8
+    ld hl,400h - 16
     ld (rb_prev),hl
-    ld hl,200h - (29h * 8)
+    ld hl,400h - (29h * 16)
     ld (rb_tail),hl
     ret
 
-scroll_begin:
+;   Called at start of frame to append prepare scroller rendering:
+;
+;   Feeds the next ASCII character and updates the pre-rotate matrix.
+;
+;   Appends the next character to the ringbuffer that's going to be rendered next.
+;
+scroll_begin_frame:
     ld a,(frame_count)
     cp 0
     jr nz,.frame_n
+
 .frame_0:
     ; feed next character
     ld hl,(str_next)
@@ -71,17 +69,19 @@ scroll_begin:
     ld (str_next),hl
     cp 0
     jp z,.rewind_str
+                        ; FIXME: support lower case characters
     sub 20h             ; space => index 0
     add a,a             ; * 2
     add a,a             ; * 4
-    ld hl,FONT_BASE     ; character table 1 (starting at space)
+    ld hl,FONT_BASE     ; character table 1 (starting at ASCII code 20h)
     ld d,0
     ld e,a
     add hl,de
     add hl,de           ; * 8, hl now points to character font data
 
-    ld de,SHIFT_MATRIX_BASE ; create preshifted 8x8 bytes matrix of the character pixels
-    ldi                     ; unrotated character pixels
+    ; create pre-rotated 8x8 matrix of charater tile pixels
+    ld de,SHIFT_MATRIX_BASE
+    ldi                     ; populate first row with unrotated character pixels
     ldi
     ldi
     ldi
@@ -91,133 +91,97 @@ scroll_begin:
     ldi
     ex de,hl
     ld de,SHIFT_MATRIX_BASE
-    ld b,7
-
-.loop_rows:
+    ld b,8 * 7
+.pre_rotate_loop:
     ld a,(de)
     inc e
     rlca
     ld (hl),a
     inc l
+    djnz .pre_rotate_loop
 
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    ld a,(de)
-    inc e
-    rlca
-    ld (hl),a
-    inc l
-
-    djnz .loop_rows
-
-    ld bc,8
+    ; update ringbuffer pointers
+    ld bc,16
     ld hl,(rb_head)
     ld (rb_prev),hl
     add hl,bc
     ld a,h
-    and 1
+    and 3
     ld h,a
     ld (rb_head),hl
 
     ld hl,(rb_tail)
     add hl,bc
     ld a,h
-    and 1
+    and 3
     ld h,a
     ld (rb_tail),hl
 
 .frame_n:
+    ; load pre-rotate left/right slice bit mask into C
+    ld a,(frame_count)
+    ld b,a
     ld hl,masks
-    ld b,0
-    ld c,a
-    add hl,bc
-    ld c,(hl)       ; C is bit mask 0, 3, ...
+    add a,l
+    ld l,a
+    ld c,(hl)
 
-.left_side:
-    ld a,(frame_count)
+.right_slice:
+    ; load the current pre-rotate row address into DE
+    ld a,b          ; frame_count => a
     add a,a
     add a,a
     add a,a
     ld d,[H(SHIFT_MATRIX_BASE)]
-    ld e,a          ; de now points into preshifted pixel matrix
+    ld e,a
+    push de         ; store for left slice part
 
-    ld a,(frame_count)
+    ; load the ring buffer location for the previous character tile into HL
+    ld a,b          ; frame_count => a
     add a,a
-    or [H(RINGBUFFER_BASE)]
+    add a,a
+    add a,[H(RINGBUFFER_BASE)]
     ld hl,(rb_prev)
-    or h
-    ld h,a          ; hl now points to the ring buffer - 1
-
-    ld b,8
-.loop_left:
-    ld a,(de)       ; load pre-rotated value
-    and c           ; mask out 'left' part
-    or (hl)
-    ld (hl),a
-    inc e
-    inc l
-    djnz .loop_left
-
-.right_side:
-    ld a,(frame_count)
-    add a,a
-    add a,a
-    add a,a
-    ld d,[H(SHIFT_MATRIX_BASE)]
-    ld e,a          ; de now points into preshifted pixel matrix
-
-    ld a,(frame_count)
-    add a,a
-    or [H(RINGBUFFER_BASE)]
-    ld hl,(rb_head)
-    or h
+    add a,h
     ld h,a
 
-    ld a,c          ; invert mask
+    ld b,8
+.right_slice_loop:
+    ld a,(de)       ; load pre-rotated pixels from pre-rotate matrix
+    and c           ; mask right slice
+    or (hl)         ; combine current right slice with previous character's left slice
+    ld (hl),a
+    inc l
+    ld (hl),a       ; stretch from 8 to 16 pixels
+    inc l
+    inc e
+    djnz .right_slice_loop
+
+.left_slice:
+    pop de          ; restore pointer into pre-rotate matrix
+
+    ; load the ring buffer location for the current character tile into HL
+    ld a,(frame_count)
+    add a,a
+    add a,a
+    add a,[H(RINGBUFFER_BASE)]
+    ld hl,(rb_head)
+    add a,h
+    ld h,a
+
+    ld a,c          ; invert mask so it isolates the left-slice
     xor FFh
     ld c,a
     ld b,8
-.loop_right:
+.left_slice_loop
     ld a,(de)       ; load pre-rotated value
-    and c           ; mask out 'right' part
-    ld (hl),a
-    inc e
+    and c           ; mask out left slice
+    ld (hl),a       ; write left slice to ring buffer
     inc l
-    djnz .loop_right
+    ld (hl),a       ; stretch from 8 to 16 pixels
+    inc l
+    inc e
+    djnz .left_slice_loop
     ret
 
 .rewind_str:
@@ -226,10 +190,9 @@ scroll_begin:
     ld (str_next),hl
     jp .frame_0
 
-;
 ;   Bump the scroll frame counter.
 ;
-scroll_end:
+scroll_end_frame:
     ld hl,frame_count   ; bump frame counter 0..7
     ld a,(hl)
     inc a
@@ -239,19 +202,19 @@ scroll_end:
 
 ;
 ;   Draw the scroller string spanning the whole display width.
-;   Vertically stretched to 16 pixels.
 ;   inputs:
 ;       e: Y coordinate
 ;
-scroll_draw_16:
-    ld d,80h
+scroll_draw:
+    ld d,80h            ; de now target address in video ram
     ld a,(frame_count)
     add a,a
-    or [H(RINGBUFFER_BASE)]
-    ld c,a          ; store ring buffer base high byte
+    add a,a
+    add a,[H(RINGBUFFER_BASE)]
+    ld c,a              ; store ring buffer base high byte
     ld hl,(rb_tail)
-    or h
-    ld h,a
+    add a,h
+    ld h,a              ; hl now source address in a ring buffer
 
     ld b,28h
     ld a,e          ; store Y coordinate
@@ -259,43 +222,28 @@ scroll_draw_16:
     ex af,af'
     push bc
 
-    ldi             ; blit one 8x8 tile
-    dec l
+    ldi             ; blit one 8x16 tile
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec l
     ldi
-
     ldi
-    dec hl          ; last one may overflow l
     ldi
 
     pop bc
 
     ld a,h          ; ringbuffer wraparound
-    and 1
-    or c
+    and 3
+    add a,c
     ld h,a
 
     inc d           ; next column
