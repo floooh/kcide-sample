@@ -24,7 +24,7 @@ write_colors:
     ld de,SCROLL_ADDR
     ld b,28h
 .loop:
-    push bc
+    ld c,FFh        ; prevent C from underflowing during LDI
     ld hl,colors
     ldi
     ldi
@@ -58,7 +58,6 @@ write_colors:
     ldi
     inc d
     ld e,[L(SCROLL_ADDR)]
-    pop bc
     djnz .loop
     call access_pixels_1
     ret
@@ -84,20 +83,20 @@ colors:
     db BG_BLUE  | FG_BLUEGREEN
     db BG_BLACK | FG_BLUEGREEN
     db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLACK | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLACK | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLACK
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLACK
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
+    db BG_BLUE
 
 scroll_text:
     DB "*** The KC85 was a series of 8-bit computers built in East Germany during the 1980's. "
