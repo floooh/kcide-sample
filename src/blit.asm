@@ -138,6 +138,7 @@ blit8x8xN:
     cp A8h      ; right border
     jr nc,.skip_right
     ld a,e      ; store original row
+    push bc
     ldi         ; copy 8 bytes
     ldi
     ldi
@@ -146,6 +147,7 @@ blit8x8xN:
     ldi
     ldi
     ldi
+    pop bc
     ld e,a      ; restore original row
 .skip_right
     inc d       ; next column in video mem
