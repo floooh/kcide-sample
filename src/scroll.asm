@@ -25,15 +25,15 @@ RINGBUFFER_BASE = 4000h
 
 ; scroller local state
 ;
-str_start:          dw 0        ; start address of zero-terminated ASCII string
-str_next:           dw 0        ; pointer to next character, rewinds to str_start on zero-character
-frame_count:        db 0        ; frame counter (only low 3 bits relevant)
-rb_tail:            dw 0        ; current ringbuffer tail 10-bit offset
-rb_head:            dw 0        ; current ringbuffer head 10-bit offset, increments by 16 every 8 frames, wraps around at 400h
-rb_prev:            dw 0        ; offset of the current character (head-1)
+scroll_str_start:          dw 0        ; start address of zero-terminated ASCII string
+scroll_str_next:           dw 0        ; pointer to next character, rewinds to str_start on zero-character
+scroll_frame_count:        db 0        ; frame counter (only low 3 bits relevant)
+scroll_rb_tail:            dw 0        ; current ringbuffer tail 10-bit offset
+scroll_rb_head:            dw 0        ; current ringbuffer head 10-bit offset, increments by 16 every 8 frames, wraps around at 400h
+scroll_rb_prev:            dw 0        ; offset of the current character (head-1)
 
     align 8
-masks: db 0,1,3,7,15,31,63,127  ; left/right masks for pre-rotated tile pixels
+scroll_masks: db 0,1,3,7,15,31,63,127  ; left/right masks for pre-rotated tile pixels
 
 ;   scroll_init
 ;
@@ -41,12 +41,12 @@ masks: db 0,1,3,7,15,31,63,127  ; left/right masks for pre-rotated tile pixels
 ;       HL: points to start of zero-terminated string data
 ;
 scroll_init:
-    ld (str_start),hl
-    ld (str_next),hl
+    ld (scroll_str_start),hl
+    ld (scroll_str_next),hl
     ld hl,400h - 16
-    ld (rb_prev),hl
+    ld (scroll_rb_prev),hl
     ld hl,400h - (29h * 16)
-    ld (rb_tail),hl
+    ld (scroll_rb_tail),hl
     ret
 
 ;   Called at start of frame to append prepare scroller rendering:
@@ -56,17 +56,17 @@ scroll_init:
 ;   Appends the next character to the ringbuffer that's going to be rendered next.
 ;
 scroll_begin_frame:
-    ld a,(frame_count)
-    cp 0
+    ld a,(scroll_frame_count)
+    or a
     jr nz,.frame_n
 
 .frame_0:
     ; feed next character
-    ld hl,(str_next)
+    ld hl,(scroll_str_next)
     ld a,(hl)           ; next ASCII character
     inc hl
-    ld (str_next),hl
-    cp 0
+    ld (scroll_str_next),hl
+    or a
     jp z,.rewind_str
 
     ld h,0
@@ -95,26 +95,26 @@ scroll_begin_frame:
 
     ; update ringbuffer pointers
     ld bc,16
-    ld hl,(rb_head)
-    ld (rb_prev),hl
+    ld hl,(scroll_rb_head)
+    ld (scroll_rb_prev),hl
     add hl,bc
     ld a,h
     and 3
     ld h,a
-    ld (rb_head),hl
+    ld (scroll_rb_head),hl
 
-    ld hl,(rb_tail)
+    ld hl,(scroll_rb_tail)
     add hl,bc
     ld a,h
     and 3
     ld h,a
-    ld (rb_tail),hl
+    ld (scroll_rb_tail),hl
 
 .frame_n:
     ; load pre-rotate left/right slice bit mask into C
-    ld a,(frame_count)
+    ld a,(scroll_frame_count)
     ld b,a
-    ld hl,masks
+    ld hl,scroll_masks
     add a,l
     ld l,a
     ld c,(hl)
@@ -134,7 +134,7 @@ scroll_begin_frame:
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
-    ld hl,(rb_prev)
+    ld hl,(scroll_rb_prev)
     add a,h
     ld h,a
 
@@ -154,11 +154,11 @@ scroll_begin_frame:
     pop de          ; restore pointer into pre-rotate matrix
 
     ; load the ring buffer location for the current character tile into HL
-    ld a,(frame_count)
+    ld a,(scroll_frame_count)
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
-    ld hl,(rb_head)
+    ld hl,(scroll_rb_head)
     add a,h
     ld h,a
 
@@ -179,14 +179,14 @@ scroll_begin_frame:
 
 .rewind_str:
     ; end of input string was reached, rewind to start and load next character
-    ld hl,(str_start)
-    ld (str_next),hl
+    ld hl,(scroll_str_start)
+    ld (scroll_str_next),hl
     jp .frame_0
 
 ;   Bump the scroll frame counter.
 ;
 scroll_end_frame:
-    ld hl,frame_count   ; bump frame counter 0..7
+    ld hl,scroll_frame_count   ; bump frame counter 0..7
     ld a,(hl)
     inc a
     and 7
@@ -200,12 +200,12 @@ scroll_end_frame:
 ;
 scroll_draw:
     ld d,80h            ; de now target address in video ram
-    ld a,(frame_count)
+    ld a,(scroll_frame_count)
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
     ld c,a              ; store ring buffer base high byte
-    ld hl,(rb_tail)
+    ld hl,(scroll_rb_tail)
     add a,h
     ld h,a              ; hl now source address in a ring buffer
 
