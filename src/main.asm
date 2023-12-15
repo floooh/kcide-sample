@@ -1,3 +1,4 @@
+    include 'macros.asm'
     org 200h
 
 SCROLL_ADDR = 80E0h
@@ -5,7 +6,7 @@ SCROLL_ADDR = 80E0h
     ld a,60h
     call cls_1
     call display_1
-    call write_colors
+    call write_scroller_colors
     call vsync_init
     ld hl,scroll_text
     call scroll_init
@@ -19,43 +20,17 @@ SCROLL_ADDR = 80E0h
     call vsync_wait
     jr .frame_loop
 
-write_colors:
+write_scroller_colors:
     call access_colors_1
     ld de,SCROLL_ADDR
     ld b,28h
 .loop:
     ld c,FFh        ; prevent C from underflowing during LDI
     ld hl,colors
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    ldi8
+    ldi8
+    ldi8
+    ldi7
     inc d
     ld e,[L(SCROLL_ADDR)]
     djnz .loop
@@ -97,9 +72,13 @@ colors:
     db BG_BLUE
     db BG_BLUE
     db BG_BLUE
+    db BG_BLUE
 
 scroll_text:
-    DB "*** The KC85 was a series of 8-bit computers built in East Germany during the 1980's. "
-    DB "KC means 'Kleincomputer' or 'Small Computer', this was an umbrella name for 6 different computer models "
-    DB "with partially very different hardware from 2 different manufacturers. "
+    DB "*** The KC85 was a series of 8-BIT COMPUTERS BUILT IN EAST GERMANY DURING THE 1980's. "
+    DB "KC MEANS 'KLEINCOMPUTER' OR 'SMALL COMPUTER', THIS WAS AN UMBRELLA NAME FOR 6 DIFFERENT COMPUTER MODELS "
+    DB "WITH PARTIALLY VERY DIFFERENT HARDWARE FROM 2 DIFFERENT MANUFACTURERS. "
     db 0
+
+    org FONT_BASE
+    include 'atari_font.asm'

@@ -22,8 +22,6 @@
 
 SHIFT_MATRIX_BASE = 3F00h
 RINGBUFFER_BASE = 4000h
-FONT_BASE_0 = EE00h         ; ASCII codes 20h..5Fh
-FONT_BASE_1 = FE00h         ; ASCII codes 0..1Fh and 60h to 7Fh
 
 ; scroller local state
 ;
@@ -71,42 +69,19 @@ scroll_begin_frame:
     cp 0
     jp z,.rewind_str
 
-    ; select font table
-    cp 5Fh
-    jr c, .find_font_0
-    ; lower-case characters
-    sub 40h
-    ld hl,FONT_BASE_1
-    jr .font_selected
-.find_font_0:
-    cp 1Fh
-    jr c, .find_font_1
-    ; upper-case characters
-    sub 20h
-    ld hl,FONT_BASE_0
-    jr .font_selected
-.find_font_1:
-    ; special characters < 20h
-    ld hl,FONT_BASE_0
-
-.font_selected:         ; a is now character index in font table, hl points to font table
-    add a,a             ; * 2
-    add a,a             ; * 4
-    ld d,0
-    ld e,a
-    add hl,de
-    add hl,de           ; * 8, hl now points to character font data
+    ld h,0
+    sub 20h             ; a is now char index into font table
+    add a,a             ; * 2 (CAREFUL, MUST NOT OVERFLOW)
+    ld l,a
+    add hl,hl           ; * 4
+    add hl,hl           ; * 8
+    ex de,hl
+    ld hl,FONT_BASE
+    add hl,de           ; hl now points to start of character font pixels
 
     ; create pre-rotated 8x8 matrix of charater tile pixels
     ld de,SHIFT_MATRIX_BASE
-    ldi                     ; populate first row with unrotated character pixels
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    ldi8
     ex de,hl
     ld de,SHIFT_MATRIX_BASE
     ld b,8 * 7
@@ -237,26 +212,11 @@ scroll_draw:
     ld b,28h
     ld a,e          ; store Y coordinate
 .loop:
+    ; NOTE: don't bother trying to squash the blit into push/pop, not worth it
     ex af,af'
     push bc
-
-    ldi             ; blit one 8x16 tile
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-
+    ldi8
+    ldi8
     pop bc
 
     ld a,h          ; ringbuffer wraparound
