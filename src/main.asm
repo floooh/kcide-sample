@@ -1,6 +1,5 @@
     include 'macros.asm'
     org 200h
-    list macro
 
 FONT_BASE = 1000h
 SCROLL_ADDR = 80E0h
