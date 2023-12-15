@@ -1,6 +1,8 @@
     include 'macros.asm'
     org 200h
+    list macro
 
+FONT_BASE = 1000h
 SCROLL_ADDR = 80E0h
 
     ld a,60h
@@ -10,14 +12,9 @@ SCROLL_ADDR = 80E0h
     call vsync_init
     ld hl,scroll_text
     call scroll_init
-    ld hl,kc85_raster
-    ld de,8740h
-    ld b,6
-    ld c,27
-    call raster_init
-    call raster_draw
 
 .frame_loop:
+    call raster_draw
     call scroll_begin_frame
     ld e,[L(SCROLL_ADDR)]
     call scroll_draw
@@ -80,15 +77,6 @@ colors:
     db BG_BLUE
     db BG_BLUE
     db BG_BLUE
-
-kc85_raster:
-    ; 'KC85' as 28x6 raster
-    db 1,1,0,0,1,1,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1
-    db 1,1,0,1,1,0,0,1,1,0,0,1,1,0,1,1,0,0,1,1,0,1,1,0,0,0,0
-    db 1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,0
-    db 1,1,0,1,1,0,0,1,1,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,1,1
-    db 1,1,0,0,1,1,0,1,1,0,0,1,1,0,1,1,0,0,1,1,0,1,1,0,0,1,1
-    db 1,1,0,0,0,1,1,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0
 
 scroll_text:
     DB "*** The KC85 was a series of 8-BIT COMPUTERS BUILT IN EAST GERMANY DURING THE 1980's. "

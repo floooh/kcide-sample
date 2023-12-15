@@ -1,5 +1,3 @@
-FONT_BASE = C00h
-
     macro ldi8
     ldi
     ldi
