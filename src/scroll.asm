@@ -196,37 +196,36 @@ scroll_end_frame:
 ;
 ;   Draw the scroller string spanning the whole display width.
 ;   inputs:
-;       e: Y coordinate
+;       de: points to a 64-bytes array of Y positions
 ;
 scroll_draw:
-    ld d,80h            ; de now target address in video ram
     ld a,(scroll_frame_count)
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
-    ld c,a              ; store ring buffer base high byte
-    ld hl,(scroll_rb_tail)
+    exx
+    ld b,a              ; store ring buffer base high byte
+    ld hl,(scroll_rb_tail)  ; source blit address
     add a,h
-    ld h,a              ; hl now source address in a ring buffer
+    ld h,a                  ; hl now source address in a ring buffer
+    ld d,80h                ; d is video address start high byte
+    exx
 
-    ld b,28h
-    ld a,e          ; store Y coordinate
+    ld b,28h                ; column counter
 .loop:
     ; NOTE: don't bother trying to squash the blit into push/pop, not worth it
-    ex af,af'
-    push bc
+    ld a,(de)       ; current Y coordinate
+    exx             ; swap in blit hl (src) and de (dst)
+    ld e,a          ; set blit dst Y coordinate
+    ld c,FFh        ; prevent underflow during LDI
     ldi8
     ldi8
-    pop bc
-
     ld a,h          ; ringbuffer wraparound
     and 3
-    add a,c
+    add a,b
     ld h,a
-
-    inc d           ; next column
-    ex af,af'
-    ld e,a          ; restore y coordinate
-
+    inc d           ; next video ram column
+    exx
+    inc e           ; increment Y coord buffer
     djnz .loop
     ret

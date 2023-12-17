@@ -2,7 +2,7 @@
     org 200h
 
 FONT_BASE = 1000h
-SCROLL_ADDR = 80E0h
+SCROLL_POS = 80E0h
 
     ld a,60h
     call cls_1
@@ -15,7 +15,7 @@ SCROLL_ADDR = 80E0h
 .frame_loop:
     call raster_draw
     call scroll_begin_frame
-    ld e,[L(SCROLL_ADDR)]
+    ld de,scroll_y
     call scroll_draw
     call scroll_end_frame
 
@@ -24,7 +24,7 @@ SCROLL_ADDR = 80E0h
 
 write_scroller_colors:
     call access_colors_1
-    ld de,SCROLL_ADDR
+    ld de,SCROLL_POS
     ld b,28h
 .loop:
     ld c,FFh        ; prevent C from underflowing during LDI
@@ -34,7 +34,7 @@ write_scroller_colors:
     ldi8
     ldi7
     inc d
-    ld e,[L(SCROLL_ADDR)]
+    ld e,[L(SCROLL_POS)]
     djnz .loop
     call access_pixels_1
     ret
@@ -43,6 +43,31 @@ write_scroller_colors:
     include "vsync.asm"
     include "scroll.asm"
     include "raster.asm"
+
+    ; 64-bytes wraparound Y coordinates for sine-wave scroller
+    ;
+    ; generated with:
+    ;
+    ;    #include <math.h>
+    ;    #include <stdio.h>
+    ;    int main() {
+    ;        float x0 = -M_PI;
+    ;        float dx = (M_PI) / 40.0f;
+    ;        for (int i = 0; i < 40; i++) {
+    ;            float s = sin(x0);
+    ;            int si = 0xE0 + roundf(s * 24.0f);
+    ;            x0 += dx;
+    ;            printf("%02Xh,", si);
+    ;        }
+    ;        printf("\n");
+    ;    }
+    ;
+scroll_y:
+    db E0h,DEh,DCh,DAh,D9h,D7h,D5h,D3h
+    db D2h,D0h,CFh,CEh,CDh,CCh,CBh,CAh
+    db C9h,C9h,C8h,C8h,C8h,C8h,C8h,C9h
+    db C9h,CAh,CBh,CCh,CDh,CEh,CFh,D0h
+    db D2h,D3h,D5h,D7h,D9h,DAh,DCh,DEh
 
 colors:
     db BG_BLACK | FG_YELLOW
