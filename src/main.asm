@@ -2,7 +2,6 @@
     org 200h
 
 FONT_BASE = 1000h
-SCROLL_POS = 80E0h
 
     ld a,60h
     call cls_1
@@ -24,17 +23,16 @@ SCROLL_POS = 80E0h
 
 write_scroller_colors:
     call access_colors_1
-    ld de,SCROLL_POS
+    ld de,80C4h
     ld b,28h
 .loop:
-    ld c,FFh        ; prevent C from underflowing during LDI
+    push bc
+    ld bc,54
     ld hl,colors
-    ldi8
-    ldi8
-    ldi8
-    ldi7
+    ldir
     inc d
-    ld e,[L(SCROLL_POS)]
+    ld e,C4h
+    pop bc
     djnz .loop
     call access_pixels_1
     ret
@@ -52,7 +50,7 @@ write_scroller_colors:
     ;    #include <stdio.h>
     ;    int main() {
     ;        float x0 = -M_PI;
-    ;        float dx = (M_PI) / 40.0f;
+    ;        float dx = (M_PI) / 39.0f;
     ;        for (int i = 0; i < 40; i++) {
     ;            float s = sin(x0);
     ;            int si = 0xE0 + roundf(s * 24.0f);
@@ -63,44 +61,67 @@ write_scroller_colors:
     ;    }
     ;
 scroll_y:
-    db E0h,DEh,DCh,DAh,D9h,D7h,D5h,D3h
-    db D2h,D0h,CFh,CEh,CDh,CCh,CBh,CAh
-    db C9h,C9h,C8h,C8h,C8h,C8h,C8h,C9h
-    db C9h,CAh,CBh,CCh,CDh,CEh,CFh,D0h
-    db D2h,D3h,D5h,D7h,D9h,DAh,DCh,DEh
+    db E0h,DEh,DCh,DAh,D8h,D7h,D5h,D3h
+    db D2h,D0h,CFh,CDh,CCh,CBh,CAh,CAh
+    db C9h,C8h,C8h,C8h,C8h,C8h,C8h,C9h
+    db CAh,CAh,CBh,CCh,CDh,CFh,D0h,D2h
+    db D3h,D5h,D7h,D8h,DAh,DCh,DEh,E0h
 
 colors:
-    db BG_BLACK | FG_YELLOW
-    db BG_BLACK | FG_YELLOW
-    db BG_BLACK | FG_YELLOW
-    db BG_BLACK | FG_YELLOWGREEN
-    db BG_BLACK | FG_YELLOW
-    db BG_BLUE  | FG_YELLOWGREEN
-    db BG_BLACK | FG_GREEN
-    db BG_BLUE  | FG_YELLOWGREEN
-    db BG_BLACK | FG_GREEN
-    db BG_BLUE  | FG_GREENBLUE
-    db BG_BLUE  | FG_TEAL
-    db BG_BLACK | FG_GREENBLUE
-    db BG_BLUE  | FG_TEAL
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLACK | FG_BLUEGREEN
-    db BG_BLUE  | FG_BLUEGREEN
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLACK
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLACK
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
-    db BG_BLUE
+    db FG_YELLOW | BG_BLUE
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW| BG_BLUE
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLUE
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_GREEN | BG_BLUE
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_GREEN | BG_BLACK
+    db FG_GREEN | BG_BLUE
+    db FG_GREEN | BG_BLACK
+    db FG_GREEN | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREEN | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREENBLUE | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREENBLUE | BG_BLACK
+    db FG_TEAL | BG_BLUE
+    db FG_GREENBLUE | BG_BLUE
+    db FG_TEAL | BG_BLACK
+    db FG_TEAL | BG_BLUE
+    db FG_TEAL | BG_BLUE
+    db FG_TEAL | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_TEAL | BG_BLUE
+    db FG_BLUEGREEN | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUE | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLACK
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
 
 scroll_text:
     DB "*** The KC85 was a series of 8-BIT COMPUTERS BUILT IN EAST GERMANY DURING THE 1980's. "
