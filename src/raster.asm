@@ -98,4 +98,4 @@ raster_data:
     align 100h
 raster_tiles:
     db   0,   0,   0,   0,   0,   0,   0, 0
-    db   0, 3Ch, 7Eh, 7Eh, 7Eh, 7Eh, 3Ch, 0
+    db   0, 2Ah, 6Bh, 14h, 6Bh, 14h, 6Bh, 2Ah
