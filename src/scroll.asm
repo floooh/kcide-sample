@@ -4,11 +4,12 @@
 ;   - 8 ringbuffer with 64 8x16 tiles each with a 40-tile wide 'sliding window'
 ;     (meaning 1024 bytes per ring buffer) starting at address 4000h
 ;   - each ringbuffer is left-shifted by 1 pixel from previous one
-;   - a frame counter which goes from 0..7
+;   - a frame counter which goes from 0..7 and then wraps around
 ;
-;   Address 3F00 contains a 8x8 byte matrix of the current character preshifted 8x.
+;   Address 3F00 contains a 8x8 byte matrix of the current character as
+;   pre-rotated tiles.
 ;
-;   Uses address 4000..5FFF for the ring buffers:
+;   Uses address 4000..5FFF for the pre-shifted ring-buffers
 ;
 ;   rb[0]:  4000
 ;   rb[1]:  4400
@@ -33,7 +34,7 @@ scroll_rb_head:            dw 0        ; current ringbuffer head 10-bit offset, 
 scroll_rb_prev:            dw 0        ; offset of the current character (head-1)
 
     align 8
-scroll_masks: db 0,1,3,7,15,31,63,127  ; left/right masks for pre-rotated tile pixels
+scroll_masks: db 0,1,3,7,15,31,63,127  ; left/right bit masks for pre-rotated tile pixels
 
 ;   scroll_init
 ;
@@ -49,14 +50,16 @@ scroll_init:
     ld (scroll_rb_tail),hl
     ret
 
-;   Called at start of frame to append prepare scroller rendering:
+;   Called at start of frame to prepare scroller rendering:
 ;
-;   Feeds the next ASCII character and updates the pre-rotate matrix.
+;   Every 8th frame, the next character is taken from the scroller string,
+;   and pre-rotated 8 times.
 ;
-;   Appends the next character to the ringbuffer that's going to be rendered next.
+;   In every frame, the current pre-rotated character will be appended
+;   to the ringbuffer that's going to be rendered that frame.
 ;
 scroll_begin_frame:
-    ld a,(scroll_frame_count)
+    ld a,(scroll_frame_count)   ; check for special 'frame 0' out of 8
     or a
     jr nz,.frame_n
 
@@ -194,7 +197,12 @@ scroll_end_frame:
     ret
 
 ;
-;   Draw the scroller string spanning the whole display width.
+;   Draw the scroller string spanning the whole display width. This
+;   chooses one of the 8 pre-shifted ringbuffers in order to achieve
+;   a smooth scrolling effect.
+;
+;   In addition the Y coordinate is offset to achieve a curved effect.
+;
 ;   inputs:
 ;       de: points to a 64-bytes array of Y positions
 ;
@@ -218,7 +226,7 @@ scroll_draw:
     exx             ; swap in blit hl (src) and de (dst)
     ld e,a          ; set blit dst Y coordinate
     ld c,FFh        ; prevent underflow during LDI
-    ldi8
+    ldi8            ; copy 16 bytes
     ldi8
     ld a,h          ; ringbuffer wraparound
     and 3
