@@ -1,3 +1,5 @@
+; helper functions to synchronize with vertical blank
+
 ; bit 1 set when vsync was triggered
 vsync:  db 0
 

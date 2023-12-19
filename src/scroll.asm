@@ -76,7 +76,7 @@ scroll_begin_frame:
     add hl,hl           ; * 4
     add hl,hl           ; * 8
     ex de,hl
-    ld hl,FONT_BASE
+    ld hl,font
     add hl,de           ; hl now points to start of character font pixels
 
     ; create pre-rotated 8x8 matrix of charater tile pixels

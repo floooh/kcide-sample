@@ -1,12 +1,13 @@
 frame_count: db 0
 
+; write a zig-zag line of to the color video ram
 color_write_line:
     ld d,80h
-    ld_de_a_inc_e
-    ld_de_a_dec_e
-    ld_de_a_inc_e
-    ld_de_a_dec_e
-    ld_de_a_inc_e
+    logo_colors_down
+    logo_colors_up
+    logo_colors_down
+    logo_colors_up
+    logo_colors_down
     ret
 
 color_write_block:
@@ -20,7 +21,7 @@ color_write_block:
     call color_write_line
     ret
 
-color_draw_frame:
+color_update_logo:
     call access_colors_1
 
     ld a,(frame_count)
@@ -48,3 +49,75 @@ color_draw_frame:
     call access_pixels_1
 
     ret
+
+color_init_scroller:
+    call access_colors_1
+    ld de,80C4h
+    ld b,28h
+.loop:
+    push bc
+    ld bc,54
+    ld hl,scroller_colors
+    ldir
+    inc d
+    ld e,C4h
+    pop bc
+    djnz .loop
+    call access_pixels_1
+    ret
+
+scroller_colors:
+    db FG_YELLOW | BG_BLUE
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW| BG_BLUE
+    db FG_YELLOW| BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOW | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLUE
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_GREEN | BG_BLUE
+    db FG_YELLOWGREEN | BG_BLACK
+    db FG_GREEN | BG_BLACK
+    db FG_GREEN | BG_BLUE
+    db FG_GREEN | BG_BLACK
+    db FG_GREEN | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREEN | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREENBLUE | BG_BLACK
+    db FG_GREENBLUE | BG_BLUE
+    db FG_GREENBLUE | BG_BLACK
+    db FG_TEAL | BG_BLUE
+    db FG_GREENBLUE | BG_BLUE
+    db FG_TEAL | BG_BLACK
+    db FG_TEAL | BG_BLUE
+    db FG_TEAL | BG_BLUE
+    db FG_TEAL | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_TEAL | BG_BLUE
+    db FG_BLUEGREEN | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUE | BG_BLACK
+    db FG_BLUEGREEN | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLACK
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE
+    db FG_BLUE | BG_BLUE

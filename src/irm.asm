@@ -1,7 +1,6 @@
 ; KC85/4 video system helper code
 
-; write to pixel bank 0
-; trashes: a
+; enable CPU write access to pixel bank 0 at address 8000h
 access_pixels_0:
     ld a,(ix+1)
     and ~(IO84_SEL_CPU_COLOR|IO84_SEL_CPU_IMG)
@@ -9,8 +8,7 @@ access_pixels_0:
     out (84h),a
     ret
 
-; write to pixel bank 1
-; trashes: a
+; enable CPU write access to pixel bank 1 at address 8000h
 access_pixels_1:
     ld a,(ix+1)
     and ~(IO84_SEL_CPU_COLOR)
@@ -19,8 +17,7 @@ access_pixels_1:
     out (84h),a
     ret
 
-; write to color bank 0
-; trashes: a
+; enable CPU write access to color bank 0 at address 8000h
 access_colors_0:
     ld a,(ix+1)
     and ~(IO84_SEL_CPU_IMG)
@@ -29,8 +26,7 @@ access_colors_0:
     out (84h),a
     ret
 
-; write to color bank 1
-; trashes: a
+; enable CPU write access to color bank 1 at address 8000h
 access_colors_1:
     ld a,(ix+1)
     or IO84_SEL_CPU_COLOR|IO84_SEL_CPU_IMG
@@ -39,7 +35,6 @@ access_colors_1:
     ret
 
 ; display image 0
-; trashes: a
 display_0:
     ld a,(ix+1)
     and ~(IO84_SEL_VIEW_IMG)
@@ -48,7 +43,6 @@ display_0:
     ret
 
 ; display image 1
-; trashes: a
 display_1:
     ld a,(ix+1)
     or IO84_SEL_VIEW_IMG
@@ -59,7 +53,6 @@ display_1:
 ; clear image 0
 ; inputs:
 ;   a: background color
-; trashes: a, hl, de, b
 cls_0:
     ld b,a
     call access_colors_0
@@ -71,10 +64,8 @@ cls_0:
     ret
 
 ; clear image 1
-; clear image 0
 ; inputs:
 ;   a: background color
-; trashes: a, hl, de, b
 cls_1:
     ld b,a
     call access_colors_1

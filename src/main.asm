@@ -1,110 +1,49 @@
-    include 'macros.asm'
+    include 'defines.asm'
+
+    ; on the KC85/2..4, programs usually start at address 200h
     org 200h
 
-FONT_BASE = 1000h
-
+    ; clear (hidden) video image 1 to black
     ld a,0h
     call cls_1
+
+    ; warm up the color scrolling effect for the big KC85/4 logo
     ld b,10h
 .warmup_colors:
     push bc
-    call color_draw_frame
+    call color_update_logo
     pop bc
     djnz .warmup_colors
+    ; write colors for the scroller effect
+    call color_init_scroller
+    ; draw the big KC85/4 logo
     call raster_draw
-    call write_scroller_colors
+    ; display video image 1
     call display_1
+    ; initialize vertical blank interrupt
     call vsync_init
+    ; initialize the text scroller
     ld hl,scroll_text
     call scroll_init
 
+    ; per-frame code starts here
 .frame_loop:
-    call color_draw_frame
+    ; update the color scrolling effect of the KC85/4 logo
+    call color_update_logo
+    ; update the text scrolling effect
     call scroll_begin_frame
     ld de,scroll_y
     call scroll_draw
     call scroll_end_frame
-
+    ; wait for next vblank
     call vsync_wait
     jr .frame_loop
-
-write_scroller_colors:
-    call access_colors_1
-    ld de,80C4h
-    ld b,28h
-.loop:
-    push bc
-    ld bc,54
-    ld hl,colors
-    ldir
-    inc d
-    ld e,C4h
-    pop bc
-    djnz .loop
-    call access_pixels_1
-    ret
 
     include "color.asm"
     include "irm.asm"
     include "vsync.asm"
     include "scroll.asm"
     include "raster.asm"
-
-colors:
-    db FG_YELLOW | BG_BLUE
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOW| BG_BLACK
-    db FG_YELLOW| BG_BLACK
-    db FG_YELLOW| BG_BLUE
-    db FG_YELLOW| BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOWGREEN | BG_BLACK
-    db FG_YELLOW | BG_BLACK
-    db FG_YELLOWGREEN | BG_BLUE
-    db FG_YELLOWGREEN | BG_BLACK
-    db FG_YELLOWGREEN | BG_BLACK
-    db FG_YELLOWGREEN | BG_BLACK
-    db FG_GREEN | BG_BLUE
-    db FG_YELLOWGREEN | BG_BLACK
-    db FG_GREEN | BG_BLACK
-    db FG_GREEN | BG_BLUE
-    db FG_GREEN | BG_BLACK
-    db FG_GREEN | BG_BLACK
-    db FG_GREENBLUE | BG_BLUE
-    db FG_GREEN | BG_BLACK
-    db FG_GREENBLUE | BG_BLUE
-    db FG_GREENBLUE | BG_BLACK
-    db FG_GREENBLUE | BG_BLUE
-    db FG_GREENBLUE | BG_BLACK
-    db FG_TEAL | BG_BLUE
-    db FG_GREENBLUE | BG_BLUE
-    db FG_TEAL | BG_BLACK
-    db FG_TEAL | BG_BLUE
-    db FG_TEAL | BG_BLUE
-    db FG_TEAL | BG_BLACK
-    db FG_BLUEGREEN | BG_BLUE
-    db FG_TEAL | BG_BLUE
-    db FG_BLUEGREEN | BG_BLACK
-    db FG_BLUEGREEN | BG_BLUE
-    db FG_BLUEGREEN | BG_BLUE
-    db FG_BLUEGREEN | BG_BLUE
-    db FG_BLUE | BG_BLACK
-    db FG_BLUEGREEN | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLACK
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
-    db FG_BLUE | BG_BLUE
 
     ; 64-bytes wraparound Y coordinates for sine-wave scroller
     ;
@@ -138,5 +77,6 @@ scroll_text:
     DB "WITH PARTIALLY VERY DIFFERENT HARDWARE FROM 2 DIFFERENT MANUFACTURERS. "
     db 0
 
-    org FONT_BASE
+    align 100h
+font:
     include 'kc853_font.asm'

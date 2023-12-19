@@ -1,3 +1,4 @@
+; KC85/3 font ROM dump (the KC85/3 font looks nicer than the KC85/4 font)
     db 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h ; 20
     db 00h, 18h, 18h, 18h, 18h, 00h, 18h, 00h ; 21
     db 00h, 66h, 66h, CCh, 00h, 00h, 00h, 00h ; 22
