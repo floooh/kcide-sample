@@ -22,7 +22,6 @@ raster_draw:
     ld e,93h
     call raster_hori_line
 
-
     ld hl,raster_data   ; load HL with start of raster data
     exx
     ld d,81h            ; DE is going to be video ram address
@@ -33,76 +32,79 @@ raster_draw:
     exx
     ld e,30h            ; E is dst Y coord
     exx
+    ld a,(hl)           ; pixels for next column
     ld b,6              ; counter for 6 rows
 .loop_rows:
-    ld a,(hl)           ; next raster pixel (0 for blank, 8 for filled)
+    rla                 ; current raster pixel into carry
+    jr nc,.skip_pixel   ; skip blank pixel
     exx                 ; store HL/BC to prevent from being destroyed by LDI
     ld hl,raster_tiles
-    add a,l
-    ld l,a              ; HL now points to blank or filles 8x8 pixel tile
     ldi8                ; 8x LDI to render 8x8 pixel tile
-    ld l,a              ; rewind HL to start of tile data
+    ld hl,raster_tiles  ; rewind HL to start of tile data
     ldi8                ; 8x LDI to render same 8x8 tile below
     exx                 ; restore HL/BC
-    inc hl              ; next raster pixel
+.continue:
     djnz .loop_rows     ; loop
+    inc hl              ; next raster row
     pop bc              ; restore column counter
     exx
     inc d               ; set video RAM dst pointer to next column
     exx
     djnz .loop_columns  ; loop over columns
     ret
+.skip_pixel:
+    exx
+    ld hl,16
+    add hl,de
+    ex de,hl
+    exx
+    jr .continue
 
-    align 100h
-raster_data:
-    ; 'KC85' as 6x38 raster
-    db 8,8,8,8,8,8  ; K
-    db 8,8,8,8,8,8
-    db 0,0,8,0,0,0
-    db 0,8,8,8,0,0
-    db 8,8,0,8,8,0
-    db 8,0,0,0,8,8
-    db 0,0,0,0,0,8
-
-    db 0,8,8,8,8,0  ; C
-    db 8,8,8,8,8,8
-    db 8,0,0,0,0,8
-    db 8,0,0,0,0,8
-    db 8,8,0,0,8,8
-    db 0,8,0,0,8,0
-    db 0,0,0,0,0,0
-
-    db 0,8,0,8,8,0  ; 8
-    db 8,8,8,8,8,8
-    db 8,0,8,0,0,8
-    db 8,0,8,0,0,8
-    db 8,8,8,8,8,8
-    db 0,8,0,8,8,0
-    db 0,0,0,0,0,0
-
-    db 8,8,8,0,8,0  ; 5
-    db 8,8,8,0,8,8
-    db 8,0,8,0,0,8
-    db 8,0,8,0,0,8
-    db 8,0,8,8,8,8
-    db 8,0,0,8,8,0
-    db 0,0,0,0,0,0
-
-    db 0,0,0,8,8,8  ; /
-    db 8,8,8,8,8,8
-    db 8,8,8,0,0,0
-    db 0,0,0,0,0,0
-
-    db 8,8,8,8,0,0  ; 4
-    db 8,8,8,8,0,0
-    db 0,0,0,8,0,0
-    db 0,0,8,8,8,8
-    db 0,0,8,8,8,8
-    db 0,0,0,8,0,0
-
-    align 100h
 raster_tiles:
-    ; blank tile
-    db   0,   0,   0,   0,   0,   0,   0, 0
-    ; circle tile
     db   0, 3Ch, 7Eh, 7Eh, 7Eh, 7Eh, 3Ch, 0
+
+raster_data:
+    ; 'KC85' as 6x38 bit raster
+    db 11111100b    ; K
+    db 11111100b
+    db 00100000b
+    db 01110000b
+    db 11011000b
+    db 10001100b
+    db 00000100b
+
+    db 01111000b    ; C
+    db 11111100b
+    db 10000100b
+    db 10000100b
+    db 11001100b
+    db 01001000b
+    db 00000000b
+
+    db 01011000b    ; 8
+    db 11111100b
+    db 10100100b
+    db 10100100b
+    db 11111100b
+    db 01011000b
+    db 00000000b
+
+    db 11101000b    ; 5
+    db 11101100b
+    db 10100100b
+    db 10100100b
+    db 10111100b
+    db 10011000b
+    db 00000000b
+
+    db 00011100b    ; /
+    db 11111100b
+    db 11100000b
+    db 00000000b
+
+    db 11110000b    ; 4
+    db 11110000b
+    db 00010000b
+    db 00111100b
+    db 00111100b
+    db 00010000b
