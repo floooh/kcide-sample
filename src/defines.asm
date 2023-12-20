@@ -1,5 +1,17 @@
-; start of merged font table in RAM
+; global variables at address 0
+COLOR_FRAME_COUNT  = 0000h      ; scrolling color effect frame counter
+VSYNC_STATE        = 0001h      ; bit zero gets set by vsync ISR
+SCROLL_STR_START   = 0002h      ; start address of zero-terminated ASCII string
+SCROLL_STR_NEXT    = 0004h      ; pointer to next character, rewinds to str_start on zero-character
+SCROLL_FRAME_COUNT = 0006h      ; frame counter (only low 3 bits relevant
+SCROLL_RB_TAIL     = 0008h      ; current ringbuffer tail 10-bit offset
+SCROLL_RB_HEAD     = 000Ah      ; current ringbuffer head 10-bit offset, increments by 16 every 8 frames, wraps around at 400h
+SCROLL_RB_PREV     = 000Ch      ; offset of the current character (head-1)
+
+; constants
 FONT_BASE = 1000h
+SHIFT_MATRIX_BASE = 3F00h
+RINGBUFFER_BASE = 4000h
 
 ; IO port 84h bit definitions
 IO84_SEL_VIEW_IMG   = (1<<0)

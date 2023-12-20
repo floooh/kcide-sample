@@ -61,7 +61,7 @@ raster_draw:
     jr .continue
 
 raster_tiles:
-    db   0, 3Ch, 7Eh, 7Eh, 7Eh, 7Eh, 3Ch, 0
+    db 0, 3Ch, 7Eh, 7Eh, 7Eh, 7Eh, 3Ch, 0
 
 raster_data:
     ; 'KC85' as 6x38 bit raster

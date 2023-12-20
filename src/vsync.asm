@@ -1,14 +1,13 @@
 ; helper functions to synchronize with vertical blank
 
-; bit 1 set when vsync was triggered
-vsync:  db 0
-
     ; setup the vertical blank interrupt via CTC channel 2
     ; the CLK/TRG2 pin of the CTC is connected to the
     ; video hardware and triggers on each vsync, programming
     ; CTC channel 2 to counter mode with a counter value
     ; of 1 can thus be used to generate an interrupt each frame
 vsync_init:
+    xor a
+    ld (VSYNC_STATE),a
     di
     ; set interrupt service routine for CTC channel 2
     ld hl,01ECh
@@ -38,7 +37,7 @@ vsync_init:
 vsync_isr:
     push af
     ld a,1
-    ld (vsync),a
+    ld (VSYNC_STATE),a
     pop af
     ei
     reti
@@ -47,9 +46,9 @@ vsync_isr:
 ; interrupt service routine was called, and then reset the
 ; bit to zero again
 vsync_wait:
-    ld a,(vsync)
+    ld a,(VSYNC_STATE)
     and 1
     jr z, vsync_wait
     xor a
-    ld (vsync),a
+    ld (VSYNC_STATE),a
     ret

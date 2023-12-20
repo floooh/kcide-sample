@@ -20,19 +20,6 @@
 ;   rb[6]:  5800
 ;   rb[7]:  5C00
 ;
-
-SHIFT_MATRIX_BASE = 3F00h
-RINGBUFFER_BASE = 4000h
-
-; scroller local state
-;
-scroll_str_start:          dw 0        ; start address of zero-terminated ASCII string
-scroll_str_next:           dw 0        ; pointer to next character, rewinds to str_start on zero-character
-scroll_frame_count:        db 0        ; frame counter (only low 3 bits relevant)
-scroll_rb_tail:            dw 0        ; current ringbuffer tail 10-bit offset
-scroll_rb_head:            dw 0        ; current ringbuffer head 10-bit offset, increments by 16 every 8 frames, wraps around at 400h
-scroll_rb_prev:            dw 0        ; offset of the current character (head-1)
-
     align 8
 scroll_masks: db 0,1,3,7,15,31,63,127  ; left/right bit masks for pre-rotated tile pixels
 
@@ -42,12 +29,14 @@ scroll_masks: db 0,1,3,7,15,31,63,127  ; left/right bit masks for pre-rotated ti
 ;       HL: points to start of zero-terminated string data
 ;
 scroll_init:
-    ld (scroll_str_start),hl
-    ld (scroll_str_next),hl
+    ld (SCROLL_STR_START),hl
+    ld (SCROLL_STR_NEXT),hl
+    ld (SCROLL_FRAME_COUNT),a
     ld hl,400h - 16
-    ld (scroll_rb_prev),hl
+    ld (SCROLL_RB_PREV),hl
     ld hl,400h - (29h * 16)
-    ld (scroll_rb_tail),hl
+    ld (SCROLL_RB_TAIL),hl
+    xor a
     ret
 
 ;   Called at start of frame to prepare scroller rendering:
@@ -59,16 +48,16 @@ scroll_init:
 ;   to the ringbuffer that's going to be rendered that frame.
 ;
 scroll_begin_frame:
-    ld a,(scroll_frame_count)   ; check for special 'frame 0' out of 8
+    ld a,(SCROLL_FRAME_COUNT)   ; check for special 'frame 0' out of 8
     or a
     jr nz,.frame_n
 
 .frame_0:
     ; feed next character
-    ld hl,(scroll_str_next)
+    ld hl,(SCROLL_STR_NEXT)
     ld a,(hl)           ; next ASCII character
     inc hl
-    ld (scroll_str_next),hl
+    ld (SCROLL_STR_NEXT),hl
     or a
     jp z,.rewind_str
 
@@ -97,24 +86,24 @@ scroll_begin_frame:
 
     ; update ringbuffer pointers
     ld bc,16
-    ld hl,(scroll_rb_head)
-    ld (scroll_rb_prev),hl
+    ld hl,(SCROLL_RB_HEAD)
+    ld (SCROLL_RB_PREV),hl
     add hl,bc
     ld a,h
     and 3
     ld h,a
-    ld (scroll_rb_head),hl
+    ld (SCROLL_RB_HEAD),hl
 
-    ld hl,(scroll_rb_tail)
+    ld hl,(SCROLL_RB_TAIL)
     add hl,bc
     ld a,h
     and 3
     ld h,a
-    ld (scroll_rb_tail),hl
+    ld (SCROLL_RB_TAIL),hl
 
 .frame_n:
     ; load pre-rotate left/right slice bit mask into C
-    ld a,(scroll_frame_count)
+    ld a,(SCROLL_FRAME_COUNT)
     ld b,a
     ld hl,scroll_masks
     add a,l
@@ -136,7 +125,7 @@ scroll_begin_frame:
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
-    ld hl,(scroll_rb_prev)
+    ld hl,(SCROLL_RB_PREV)
     add a,h
     ld h,a
 
@@ -156,11 +145,11 @@ scroll_begin_frame:
     pop de          ; restore pointer into pre-rotate matrix
 
     ; load the ring buffer location for the current character tile into HL
-    ld a,(scroll_frame_count)
+    ld a,(SCROLL_FRAME_COUNT)
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
-    ld hl,(scroll_rb_head)
+    ld hl,(SCROLL_RB_HEAD)
     add a,h
     ld h,a
 
@@ -181,14 +170,14 @@ scroll_begin_frame:
 
 .rewind_str:
     ; end of input string was reached, rewind to start and load next character
-    ld hl,(scroll_str_start)
-    ld (scroll_str_next),hl
+    ld hl,(SCROLL_STR_START)
+    ld (SCROLL_STR_NEXT),hl
     jp .frame_0
 
 ;   Bump the scroll frame counter.
 ;
 scroll_end_frame:
-    ld hl,scroll_frame_count   ; bump frame counter 0..7
+    ld hl,SCROLL_FRAME_COUNT   ; bump frame counter 0..7
     ld a,(hl)
     inc a
     and 7
@@ -206,13 +195,13 @@ scroll_end_frame:
 ;       de: points to a 64-bytes array of Y positions (aligned to 64-bytes)
 ;
 scroll_draw:
-    ld a,(scroll_frame_count)
+    ld a,(SCROLL_FRAME_COUNT)
     add a,a
     add a,a
     add a,[H(RINGBUFFER_BASE)]
     exx
     ld b,a              ; store ring buffer base high byte
-    ld hl,(scroll_rb_tail)  ; source blit address
+    ld hl,(SCROLL_RB_TAIL)  ; source blit address
     add a,h
     ld h,a                  ; hl now source address in a ring buffer
     ld d,80h                ; d is video address start high byte

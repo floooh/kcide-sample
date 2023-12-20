@@ -1,7 +1,5 @@
-frame_count: db 0
-
 ; write a zig-zag line of to the color video ram
-logo_colors_down:
+colors_down:
     ld (de),a
     inc d
     inc e
@@ -44,7 +42,7 @@ logo_colors_down:
     inc e
     ret
 
-logo_colors_up:
+colors_up:
     ld (de),a
     inc d
     dec e
@@ -89,11 +87,11 @@ logo_colors_up:
 
 color_write_line:
     ld d,80h
-    call logo_colors_down
-    call logo_colors_up
-    call logo_colors_down
-    call logo_colors_up
-    call logo_colors_down
+    call colors_down
+    call colors_up
+    call colors_down
+    call colors_up
+    call colors_down
     ret
 
 color_write_block:
@@ -110,9 +108,9 @@ color_write_block:
 color_update_logo:
     call access_colors_1
 
-    ld a,(frame_count)
+    ld a,(COLOR_FRAME_COUNT)
     dec a
-    ld (frame_count),a
+    ld (COLOR_FRAME_COUNT),a
     ld c,a
 
     ld b,FG_RED
@@ -136,7 +134,9 @@ color_update_logo:
 
     ret
 
-color_init_scroller:
+color_init:
+    xor a
+    ld (COLOR_FRAME_COUNT),a
     call access_colors_1
     ld de,80C4h
     ld b,28h
