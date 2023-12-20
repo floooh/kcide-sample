@@ -73,13 +73,12 @@ scroll_begin_frame:
     jp z,.rewind_str
 
     ld h,0
-    sub 20h             ; a is now char index into font table
     add a,a             ; * 2 (CAREFUL, MUST NOT OVERFLOW)
     ld l,a
     add hl,hl           ; * 4
     add hl,hl           ; * 8
     ex de,hl
-    ld hl,font
+    ld hl,FONT_BASE
     add hl,de           ; hl now points to start of character font pixels
 
     ; create pre-rotated 8x8 matrix of charater tile pixels

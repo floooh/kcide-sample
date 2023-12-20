@@ -1,3 +1,6 @@
+; start of merged font table in RAM
+FONT_BASE = 1000h
+
 ; IO port 84h bit definitions
 IO84_SEL_VIEW_IMG   = (1<<0)
 IO84_SEL_CPU_COLOR  = (1<<1)

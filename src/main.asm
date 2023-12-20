@@ -7,6 +7,9 @@
     ld a,0h
     call cls_1
 
+    ; merge font tables from ROM into a single font table in RAM
+    call merge_font_tables
+
     ; warm up the color scrolling effect for the big KC85/4 logo
     ld b,10h
 .warmup_colors:
@@ -38,6 +41,19 @@
     ; wait for next vblank
     call vsync_wait
     jr .frame_loop
+
+merge_font_tables:
+    ld de, FONT_BASE
+    ld hl, FE00h            ; ASCII codes 0..1Fh
+    ld bc, 20h * 8
+    ldir
+    ld hl, EE00h            ; ASCII codes 20h..5Fh
+    ld bc, 40h * 8
+    ldir
+    ld hl, FE00h + 20h * 8  ; ASCII codes 60h..7Fh
+    ld bc, 20h * 8
+    ldir
+    ret
 
     include "color.asm"
     include "irm.asm"
@@ -76,7 +92,3 @@ scroll_text:
     DB "KC MEANS 'KLEINCOMPUTER' OR 'SMALL COMPUTER', THIS WAS AN UMBRELLA NAME FOR 6 DIFFERENT COMPUTER MODELS "
     DB "WITH PARTIALLY VERY DIFFERENT HARDWARE FROM 2 DIFFERENT MANUFACTURERS. "
     db 0
-
-    align 100h
-font:
-    include 'kc853_font.asm'
