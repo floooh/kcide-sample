@@ -7,7 +7,7 @@
         "srcDir": "src",
         "mainSourceFile": "main.asm",
         "outDir": "build",
-        "outBaseFilename": "out",
+        "outBaseFilename": "demo",
         "outFiletype": "KCC"
     }
 }

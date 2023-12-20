@@ -4,8 +4,8 @@
 raster_hori_line:
     ld b,28h
     ld d,80h
-.loop:
     ld a,FFh
+.loop:
     ld (de),a
     inc d
     djnz .loop
