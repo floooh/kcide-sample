@@ -203,7 +203,7 @@ scroll_end_frame:
 ;   In addition the Y coordinate is offset to achieve a curved effect.
 ;
 ;   inputs:
-;       de: points to a 64-bytes array of Y positions
+;       de: points to a 64-bytes array of Y positions (aligned to 64-bytes)
 ;
 scroll_draw:
     ld a,(scroll_frame_count)

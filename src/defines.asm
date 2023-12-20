@@ -36,7 +36,6 @@ FG_BLUEGREEN    = (13<<3)
 FG_YELLOWGREEN  = (14<<3)
 FG_WHITE2       = (15<<3)
 
-; helper macros 8x unrolled LDI
     macro ldi8
     ldi
     ldi
@@ -46,91 +45,4 @@ FG_WHITE2       = (15<<3)
     ldi
     ldi
     ldi
-    endm
-
-; helper macros to write logo colors
-    macro logo_colors_down
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    ld (de),a
-    inc d
-    inc e
-    inc e
-    inc e
-    endm
-
-    macro logo_colors_up
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
-    ld (de),a
-    inc d
-    dec e
-    dec e
-    dec e
     endm

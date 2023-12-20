@@ -79,7 +79,7 @@ merge_font_tables:
     ;        printf("\n");
     ;    }
     ;
-    align 100h
+    align 64
 scroll_y:
     db E0h,DEh,DCh,DAh,D8h,D7h,D5h,D3h
     db D2h,D0h,CFh,CDh,CCh,CBh,CAh,CAh
