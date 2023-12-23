@@ -2,7 +2,7 @@
 
     ; on the KC85/2..4, programs usually start at address 200h
     org 200h
-
+_start:
     ; clear (hidden) video image 1 to black
     ld a,0h
     call cls_1
