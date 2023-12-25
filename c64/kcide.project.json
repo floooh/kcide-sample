@@ -1,0 +1,13 @@
+{
+    "emulator": {
+        "system": "C64"
+    },
+    "assembler": {
+        "cpu": "6502",
+        "srcDir": "src",
+        "mainSourceFile": "main.asm",
+        "outDir": "build",
+        "outBaseFilename": "out",
+        "outFiletype": "PRG"
+    }
+}
