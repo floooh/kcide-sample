@@ -24,14 +24,14 @@ init_sprites:
 ;    sta $d017           ; double height
     sta $d01b           ; priority behind foreground
 
-    lda #(sprite0/64)   ; sprite data pointer
-    sta $07f8
-    lda #(sprite1/64)
-    sta $07f9
-    lda #(sprite2/64)
-    sta $07fa
-    lda #(sprite3/64)
-    sta $07fb
+    ldx #(sprite0/64)   ; sprite data pointer
+    stx $07f8
+    inx
+    stx $07f9
+    inx
+    stx $07fa
+    inx
+    stx $07fb
 
     lda #POSX           ; position
     sta $d000           ; sprite0 posx
