@@ -16,4 +16,6 @@ Live demo: https://floooh.github.io/kcide-sample/kc854.html?file=demo.kcc
 
 ## C64 sample
 
-[TODO]
+Live demo: https://floooh.github.io/kcide-sample/c64.html?file=demo.prg
+
+![c64 sample screenshot](/screenshots/c64.webp)
