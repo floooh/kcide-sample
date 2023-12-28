@@ -1,0 +1,13 @@
+{
+    "emulator": {
+        "system": "CPC6128"
+    },
+    "assembler": {
+        "cpu": "Z80",
+        "srcDir": "src",
+        "mainSourceFile": "main.asm",
+        "outDir": "build",
+        "outBaseFilename": "out",
+        "outFiletype": "AMSDOS_BIN"
+    }
+}
