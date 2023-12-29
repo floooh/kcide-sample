@@ -7,7 +7,7 @@ _start:
     out (c),a
     ld a,(color)    ; next border color
     inc a
-    and 00011111b
+    and 00011111b   ; wraparound at 31 decimal
     ld (color),a
     or 01000000b    ; gate array function 'color selection'
     out (c),a
